@@ -81,7 +81,8 @@ class ConfigParser:
 
         # Set up logging
         transformers.logging.set_verbosity_info()
-        self.logger = Logger(self.save_dir, use_mlflow=True, experiment_id=experiment, run_name=run_name)
+        # TODO service quickfix
+        self.logger = Logger(self.save_dir, use_mlflow=False, experiment_id=experiment, run_name=run_name)
         if self.save_dir is not None:
             self.logger.log_config(config)
             self.logger.log_artifact(self.save_dir / 'config.json')
