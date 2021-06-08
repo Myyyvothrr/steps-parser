@@ -41,9 +41,14 @@ docker service create --replicas 1 \
 
 
 ## Performance analysis
+The performance analysis takes the total time of 10 requests to the steps parser with a normal length wikipedia article. In order to check if the model takes up most of the time or if the overhead concerning deserializing of logits and labels and serializing the results back to the response we timed the total time and the function `_compute_logits_and_labels` in the file `multi_parser.py`. The result was that actually a lot of the time used by the steps parser is spent in the function invoking the model evaluation on the sentences. 
 
-**CPU container:**
-|Total runtime: 57.0s | Model runtime: 52.82s|
+  |Container type | Total runtime | Runtime of cumulative calls to `_compute_logits_and_labels` |
+  | ------------- | ------------- | ----------------------------------------------------------- |
+  |CPU            |57.0s          | 52.82s                                                      |
+  |GPU            |59.0s          | 54.79s                                                      |
 
-**GPU container:**
-|Total runtime: 59.0s | Model runtime: 54.79s|
+**Conclusion:** The overhead of sending the sentences to the GPU is so large, that the calculational efficiency of the GPU does not matter that much. For this container the GPU does not offer superior performance but may improve the ressource utilization of the system.
+
+### Performance: Further investigations
+In the file `parse_service.py` the function `parser.parse()` is invoked for every sentence. So even for a large text corpus the GPU model is invoked for every sentence. This seems to be the primary bottleneck as the invokation and up and downloading of data to the GPU for every sentence is a lot of overhead. By further investigating the parse function one can see [here](https://github.com/ShadowItaly/steps-parser/blob/6e874813d14d04d0151e76824f2bdfa8b330c70a/src/models/multi_parser.py#L68) that the `parser.parse()` functions uses a batch size of one even though the class also provides a method to evaluate multiple sentences at once see `parser.evaluate_batch()` or [here](https://github.com/ShadowItaly/steps-parser/blob/6e874813d14d04d0151e76824f2bdfa8b330c70a/src/models/multi_parser.py#L88). By increasing the batch size to process multiple sentences at once instead of one at a time, one may be able to leverage the power of the GPU to improve execution speed additional to the improved GPU utilisation, this may need further investigations.
