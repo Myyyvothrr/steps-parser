@@ -86,15 +86,15 @@ class MultiParser(nn.Module):
         return parsed_sentence
 
     def parse_multi(self, sentences):
-        """Parse a singular sentence (in evaluation mode, i.e. no dropout) and perform post-processing.
+        """Parse multiple sentences (in evaluation mode, i.e. no dropout) and perform post-processing.
 
         Args:
-            sentence: The sentence to be parsed. If sentence is of type str, input is assumed to be a
-              whitespace-tokenized "raw" sentence. If sentence is of type DependencyAnnotatedSentence, tokenization will
+            sentences: The sentences to be parsed. If an item in sentences is of type str, input is assumed to be a
+              whitespace-tokenized "raw" sentence. If the item is of type DependencyAnnotatedSentence, tokenization will
               be taken from that sentence.
 
         Returns:
-            An AnnotatedSentence instance with the predicted relations.
+            An List of AnnotatedSentences with the predicted relations.
         """
         # Extract sentence tokens and make dummy batch
         batch = []
