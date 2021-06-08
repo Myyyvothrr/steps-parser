@@ -68,8 +68,8 @@ def process(request: StepsParserRequest) -> StepsParserResponse:
     # parse
     dataset = CustomCoNLLDataset.from_corpus_file(conll_stream, annotation_layers)
     results = []
-    for sentence in dataset:
-        parsed_sentence = parser.parse(sentence)
+    multi_parser = parser.parse_multi(dataset)
+    for (parsed_sentence,sentence) in zip(multi_parser,dataset):
         for col in keep_columns or []:
             parsed_sentence.annotation_data[col] = sentence[col]
         results.append(parsed_sentence.to_conll(column_mapping))
