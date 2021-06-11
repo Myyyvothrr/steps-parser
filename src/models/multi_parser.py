@@ -111,6 +111,7 @@ class MultiParser(nn.Module):
 
         # Ensure eval mode and compute logits, labels
         self.eval()
+        # Multi sentence computation, since this is the performance bottleneck
         logits, labels = self._compute_logits_and_labels(batch)
 
         parsed_sentences = []

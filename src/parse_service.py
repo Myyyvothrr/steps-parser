@@ -69,8 +69,9 @@ def process(request: StepsParserRequest) -> StepsParserResponse:
     # parse
     dataset = CustomCoNLLDataset.from_corpus_file(conll_stream, annotation_layers)
     results = []
+    # Iterate over the batches, when specifying batch size one iteration is sentence by sentence
     for chunks in range(0,len(dataset),maximum_batch_size):
-        partitioned_dataset = dataset[chunks:(chunks+64)]
+        partitioned_dataset = dataset[chunks:(chunks+maximum_batch_size)]
         multi_parser = parser.parse_multi(partitioned_dataset)
         for (parsed_sentence,sentence) in zip(multi_parser,partitioned_dataset):
             for col in keep_columns or []:
