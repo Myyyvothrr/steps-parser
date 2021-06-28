@@ -50,6 +50,7 @@ for col in keep_columns:
     annotation_layers[col] = {"type": "TagSequence", "source_column": col}
 column_mapping = {annotation_id: annotation_layer["source_column"] for annotation_id, annotation_layer in annotation_layers.items()}
 
+maximum_batch_size = 16
 
 # API
 app = FastAPI()
@@ -68,11 +69,14 @@ def process(request: StepsParserRequest) -> StepsParserResponse:
     # parse
     dataset = CustomCoNLLDataset.from_corpus_file(conll_stream, annotation_layers)
     results = []
-    for sentence in dataset:
-        parsed_sentence = parser.parse(sentence)
-        for col in keep_columns or []:
-            parsed_sentence.annotation_data[col] = sentence[col]
-        results.append(parsed_sentence.to_conll(column_mapping))
+    # Iterate over the batches, when specifying batch size one iteration is sentence by sentence
+    for chunks in range(0,len(dataset),maximum_batch_size):
+        partitioned_dataset = dataset[chunks:(chunks+maximum_batch_size)]
+        multi_parser = parser.parse_multi(partitioned_dataset)
+        for (parsed_sentence,sentence) in zip(multi_parser,partitioned_dataset):
+            for col in keep_columns or []:
+                parsed_sentence.annotation_data[col] = sentence[col]
+            results.append(parsed_sentence.to_conll(column_mapping))
 
     conll_stream.close()
 

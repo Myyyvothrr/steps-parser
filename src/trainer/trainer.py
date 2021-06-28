@@ -278,7 +278,15 @@ class Trainer:
         """
         resume_path = str(resume_path)
         self.logger.info("Loading checkpoint: {} ...".format(resume_path))
-        checkpoint = torch.load(resume_path)
+        checkpoint = 0
+        try:
+            checkpoint = torch.load(resume_path)
+        except RuntimeError as e:
+            if 'out of memory' in str(e):
+                print('| There is a GPU but not enough memory to load the model, loading on CPU...')
+                checkpoint = torch.load(resume_path,map_location=torch.device('cpu'))
+            else:
+                raise
         self.start_epoch = checkpoint['epoch'] + 1
 
         # load architecture params from checkpoint.

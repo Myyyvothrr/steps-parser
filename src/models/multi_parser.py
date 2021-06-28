@@ -85,6 +85,54 @@ class MultiParser(nn.Module):
 
         return parsed_sentence
 
+    def parse_multi(self, sentences):
+        """Parse multiple sentences (in evaluation mode, i.e. no dropout) and perform post-processing.
+
+        Args:
+            sentences: The sentences to be parsed. If an item in sentences is of type str, input is assumed to be a
+              whitespace-tokenized "raw" sentence. If the item is of type DependencyAnnotatedSentence, tokenization will
+              be taken from that sentence.
+
+        Returns:
+            An List of AnnotatedSentences with the predicted relations.
+        """
+        # Extract sentence tokens and make dummy batch
+        batch = []
+        for sentence in sentences:
+            if isinstance(sentence, AnnotatedSentence):
+                tokens = sentence.tokens[1:]  # Omit [root] token
+                multiword_tokens = sentence.multiword_tokens
+            elif isinstance(sentence, str):
+                tokens = sentence.split(" ")
+                multiword_tokens = None
+            else:
+                raise Exception("Sentence must be either whitespace-tokenized string or DependencyAnnotatedSentence!")
+            batch.append(tokens)
+
+        # Ensure eval mode and compute logits, labels
+        self.eval()
+        # Multi sentence computation, since this is the performance bottleneck
+        logits, labels = self._compute_logits_and_labels(batch)
+
+        parsed_sentences = []
+        for i in range(len(batch)):
+            # Squeeze to get rid of dummy batch dimension
+            logits_l = {outp_id: logits[outp_id][i] for outp_id in logits}
+            labels_l = {outp_id: labels[outp_id][i] for outp_id in labels}
+
+            # Create AnnotatedSentence from label tensors
+            parsed_sentence = AnnotatedSentence.from_tensors(["[root]"] + batch[i], labels_l, self.label_vocabs,
+                                                         self.annotation_types, multiword_tokens=multiword_tokens)
+
+        # Post-process those annotation layers for which post-processing modules have been provided
+            for post_processor in self.post_processors:
+                post_processor.post_process(parsed_sentence, logits_l)
+            parsed_sentences.append(parsed_sentence)
+
+        return parsed_sentences
+
+
+
     def evaluate_batch(self, gold_sentences, post_process=False):
         """Run the parser on a batch of gold AnnotatedSentences and compute parsing metrics w.r.t. to the provided
         gold annotations. Optionally, run sentence post-processing.
