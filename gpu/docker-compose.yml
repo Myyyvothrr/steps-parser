@@ -4,6 +4,8 @@ services:
     image: cuda_steps_parser
     environment:
       - STEPS_PARSER_PORT=8000
+    volumes:
+      - /resources/nlp/models/parser/steps/en/basic_mbert/:/resources/nlp/models/parser/steps/en/basic_mbert/
     deploy:
       resources:
         reservations:
