@@ -38,6 +38,7 @@ class StepsParserRequest(BaseModel):
 
 # parse settings
 args = Settings()
+print("model location:", args.model_dir)
 
 
 # STEPS parser

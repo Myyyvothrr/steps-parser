@@ -240,7 +240,9 @@ class Trainer:
         # force cpu usage
         n_gpu_use = 0
 
-        device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
+        #device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
+        device = torch.device('cuda:1')
+
         list_ids = list(range(n_gpu_use))
         return device, list_ids
 
