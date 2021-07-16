@@ -2,6 +2,7 @@ from typing import List
 from fastapi import FastAPI
 from pydantic import BaseModel, BaseSettings
 from io import StringIO
+from fastapi.logger import logger
 
 from init_config import ConfigParser
 from parse_corpus import get_config_modification
@@ -32,6 +33,7 @@ class StepsParserResponse(BaseModel):
 # List of CONLL Sentences
 class StepsParserRequest(BaseModel):
     sentences: List[List[List[str]]]
+    batch_size: int
 
 
 # parse settings
@@ -55,10 +57,16 @@ maximum_batch_size = 16
 
 # API
 app = FastAPI()
+print("PyDockerNotify: Container startup success")
 
 
 @app.post("/parse")
 def process(request: StepsParserRequest) -> StepsParserResponse:
+    maximum_batch_size = request.batch_size
+    logger.info("Using batchsize {} for this request!".format(maximum_batch_size))
+    if maximum_batch_size > 128:
+        maximum_batch_size = 128
+
     # prepare conll stream
     conll_stream = StringIO()
     for sent in request.sentences:
