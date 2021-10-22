@@ -1,0 +1,1 @@
+docker build -t textimager-uima-service-steps-parser:0.1 .

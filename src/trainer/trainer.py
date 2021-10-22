@@ -241,7 +241,8 @@ class Trainer:
         n_gpu_use = 0
 
         #device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
-        device = torch.device('cuda:1')
+        #device = torch.device('cuda:1')
+        device = torch.device('cpu')
 
         list_ids = list(range(n_gpu_use))
         return device, list_ids
@@ -282,7 +283,7 @@ class Trainer:
         self.logger.info("Loading checkpoint: {} ...".format(resume_path))
         checkpoint = 0
         try:
-            checkpoint = torch.load(resume_path)
+            checkpoint = torch.load(resume_path, map_location=torch.device('cpu'))
         except RuntimeError as e:
             if 'out of memory' in str(e):
                 print('| There is a GPU but not enough memory to load the model, loading on CPU...')

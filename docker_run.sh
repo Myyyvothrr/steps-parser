@@ -1,0 +1,1 @@
+ docker run --name textimager-uima-service-steps-parser -p 8000:8000 textimager-uima-service-steps-parser:0.1
